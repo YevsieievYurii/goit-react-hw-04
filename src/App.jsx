@@ -5,14 +5,27 @@ import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Loader from "./components/Loader/Loader";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import ImageModal from "./components/ImageModal/ImageModal";
 import axios from "axios";
 
 const App = () => {
   const [images, setImages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1); // сторінка запиту
+  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (image) => {
+    setSelectedImage(image);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedImage(null);
+    setIsModalOpen(false);
+  };
 
   const fetchImages = async (query, currentPage) => {
     setIsLoading(true);
@@ -22,7 +35,7 @@ const App = () => {
       const response = await axios.get(
         `https://api.unsplash.com/search/photos`,
         {
-          params: { query, page: currentPage, per_page: 12 },
+          params: { query, page: currentPage, per_page: 16 },
           headers: {
             Authorization: `Client-ID C86uG7l__bnngaFQsz0TNcXzqhUn3uRbrxqWRqH66ms`,
           },
@@ -35,10 +48,9 @@ const App = () => {
         tags: img.alt_description || "Unsplash image",
       }));
 
-      // Якщо це не перша сторінка — додаємо нові до старих
       setImages((prev) => [...prev, ...fetchedImages]);
     } catch (err) {
-      setError("Помилка при завантаженні зображень. Спробуйте ще раз.");
+      setError("Pardon for an enchanted image. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +73,13 @@ const App = () => {
     <div>
       <SearchBar onSubmit={handleSearch} />
       {error && <ErrorMessage message={error} />}
-      <ImageGallery images={images} />
+      <ImageGallery images={images} onImageClick={openModal} />
+      <ImageModal
+        isOpen={isModalOpen}
+        onRequestClose={closeModal}
+        image={selectedImage}
+      />
+
       {isLoading && <Loader />}
       {!isLoading && images.length > 0 && (
         <LoadMoreBtn onClick={handleLoadMore} />
